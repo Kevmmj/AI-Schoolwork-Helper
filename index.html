@@ -275,7 +275,6 @@
             background: var(--primary);
             width: 50%;
         }
-
     </style>
     <!-- Google API Scripts -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -421,10 +420,8 @@
     </main>
 
     <script>
-        /**
-         * [필수 설정] Google Cloud Console에서 발급받은 OAuth 2.0 클라이언트 ID를 입력하세요.
-         */
-        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
+        // 민재님이 주신 구글 클라이언트 ID가 적용된 코드입니다.
+        const CLIENT_ID = '598317184162-2hbd3psmqkghtsrmalevsng839o8o1g0.apps.googleusercontent.com';
         
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -432,9 +429,8 @@
         let tokenClient;
         let gapiInited = false;
         let gisInited = false;
-        let fileId = null; // Drive에 저장된 데이터 파일의 ID
+        let fileId = null;
 
-        // GAPI 로드
         gapi.load('client', initializeGapiClient);
 
         async function initializeGapiClient() {
@@ -445,7 +441,6 @@
             maybeEnableButtons();
         }
 
-        // GIS(Google Identity Services) 로드
         function gisLoaded() {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
@@ -471,12 +466,10 @@
             }
         }
 
-        // 로그인 버튼 클릭
         function handleAuthClick() {
             tokenClient.requestAccessToken({prompt: 'consent'});
         }
 
-        // 로그아웃 버튼 클릭
         function handleSignoutClick() {
             const token = gapi.client.getToken();
             if (token !== null) {
@@ -488,7 +481,6 @@
             }
         }
 
-        // Drive에서 데이터 파일(planner_data.json) 찾기 또는 생성하기
         async function findOrCreateDataFile() {
             try {
                 let response = await gapi.client.drive.files.list({
@@ -503,13 +495,11 @@
                     console.log('기존 데이터 파일을 찾았습니다. ID:', fileId);
                     await readDataFromDrive();
                 } else {
-                    // 파일이 없으면 새로 생성
                     const metadata = {
                         name: 'planner_data.json',
                         mimeType: 'application/json'
                     };
                     const initialData = JSON.stringify({ tasks: [] });
-                    
                     const file = new Blob([initialData], {type: 'application/json'});
                     
                     const form = new FormData();
@@ -530,7 +520,6 @@
             }
         }
 
-        // Drive에서 데이터 읽어오기
         async function readDataFromDrive() {
             if (!fileId) return;
             try {
@@ -540,25 +529,21 @@
                 });
                 const data = response.body ? JSON.parse(response.body) : response.result;
                 console.log('불러온 데이터:', data);
-                // 여기서 data.tasks 배열을 이용해 화면의 DOM(taskList)을 다시 그리는 로직을 추가할 수 있습니다.
             } catch (err) {
                 console.error('데이터 불러오기 실패:', err);
             }
         }
 
-        // 새 수행평가 등록 시 Drive에 데이터 덮어쓰기 저장
         async function saveDataToDrive() {
             if (!gapi.client.getToken()) {
                 alert('먼저 우측 상단의 구글 계정 연결을 진행해주세요.');
                 return;
             }
 
-            // 임시로 저장할 데이터 객체 구성 (UI의 값을 읽어왔다고 가정)
             const newData = {
                 tasks: [
                     { subject: "통합과학", title: "신소재 조사 및 활용 사례 발표", dDay: -2, progress: 50 },
                     { subject: "국어", title: "현대소설 인물 갈등 분석", dDay: -5, progress: 50 },
-                    // 새로 추가된 데이터가 배열에 들어감
                 ]
             };
 
