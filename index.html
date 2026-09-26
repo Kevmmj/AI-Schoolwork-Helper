@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수행평가 AI 플래너</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --border-color: #e5e7eb;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        /* Header */
+        header {
+            background-color: var(--card-bg);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            font-weight: normal;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-outline {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .btn-black {
+            padding: 8px 16px;
+            background: #111;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Main Layout */
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+            padding: 20px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        /* Left Panel */
+        .left-panel .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .badge-blue {
+            background-color: #e0e7ff;
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .upload-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .upload-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .upload-tab.active {
+            background: #1f2937;
+            color: white;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-field input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Right Panel */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card h3 { margin: 0; font-size: 0.9rem; color: var(--text-sub); }
+        .stat-card p { margin: 10px 0 0; font-size: 1.5rem; font-weight: bold; }
+        .stat-card:nth-child(2) p { color: #d97706; }
+        .stat-card:nth-child(3) p { color: #059669; }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .task-filters { display: flex; gap: 8px; }
+        .filter-btn {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            border: none;
+            cursor: pointer;
+            background: #f3f4f6;
+            color: var(--text-sub);
+        }
+        .filter-btn.active { background: #111; color: white; }
+        .filter-btn.warning { background: #fef3c7; color: #d97706; }
+
+        .task-item {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .task-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .subject-tag { color: var(--primary); margin-right: 10px; }
+        .d-day-tag { 
+            background: #fee2e2; color: var(--accent-red); 
+            padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; 
+        }
+
+        .task-desc {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 50%;
+        }
+
+    </style>
+    <!-- Google API Scripts -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="header-title">
+                <span style="font-size: 1.5rem;">✨</span> 수행평가 AI 플래너
+                <span class="header-subtitle">고교 수행평가 분석 & D-2 일정 관리자</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-outline">🔔 알림 설정</button>
+            <button class="btn-outline">📱 아이패드 홈 추가</button>
+            <button class="btn-black" id="loginBtn" onclick="handleAuthClick()">
+                ➜ 구글 계정 연결
+            </button>
+            <button class="btn-outline" id="signoutBtn" style="display:none;" onclick="handleSignoutClick()">로그아웃</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Left Panel -->
+        <aside class="left-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h3 style="margin:0;">📄 수행평가 유인물 AI 분석</h3>
+                    <span class="badge-blue">당일/수업시간 전용</span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 20px;">
+                    선생님이 나눠주신 안내문 사진이나 PDF를 올려주세요. 제출 마감일, 작성 요소, 준비물 및 체크리스트를 완벽하게 정리해 드릴게요!
+                </p>
+                
+                <div class="upload-tabs">
+                    <div class="upload-tab active">파일/이미지 업로드</div>
+                    <div class="upload-tab">직접 글 쓰기</div>
+                </div>
+
+                <div class="upload-area">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">☁️</div>
+                    <div><strong>유인물 이미지(PNG, JPG)나 PDF 업로드</strong></div>
+                    <div style="font-size: 0.8rem; margin-top: 5px;">클릭하여 파일을 선택해 보세요</div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-field">
+                        <label style="font-size: 0.8rem; color: var(--text-sub);">과목명</label>
+                        <input type="text" placeholder="예: 통합과학">
+                    </div>
+                    <div class="input-field">
+                        <label style="font-size: 0.8rem; color: var(--text-sub);">마감 일자 (선택)</label>
+                        <input type="date">
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="saveDataToDrive()">✨ AI 분석 & 일정 등록하기</button>
+            </div>
+
+            <div class="card" style="background-color: #fffbeb; border: 1px solid #fef3c7;">
+                <h4 style="margin-top:0; color: #b45309;">💡 당일 수행평가 준비 팁</h4>
+                <p style="font-size: 0.85rem; color: #92400e; margin: 0;">
+                    수업시간에 진행하는 단답형/논술형 수행평가는 AI 분석기로 제출 조건과 필수 키워드를 미리 정리해 두시면 점수 감점을 완벽히 예방할 수 있어요!
+                </p>
+            </div>
+        </aside>
+
+        <!-- Right Panel -->
+        <section class="right-panel">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>전체 수행평가</h3>
+                    <p id="stat-total">2개</p>
+                </div>
+                <div class="stat-card">
+                    <h3>진행 중 / 임박</h3>
+                    <p id="stat-progress">2개</p>
+                </div>
+                <div class="stat-card">
+                    <h3>완료됨</h3>
+                    <p id="stat-done">0개</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="task-header">
+                    <h3 style="margin:0;">📝 등록된 수행평가 목록</h3>
+                    <div class="task-filters">
+                        <button class="filter-btn active">전체</button>
+                        <button class="filter-btn">진행중</button>
+                        <button class="filter-btn warning">D-2 임박</button>
+                    </div>
+                </div>
+
+                <!-- Task List Area -->
+                <div id="taskList">
+                    <!-- Task Item 1 -->
+                    <div class="task-item">
+                        <div class="task-title">
+                            <div>
+                                <span class="subject-tag">통합과학</span>
+                                신소재 조사 및 활용 사례 발표
+                            </div>
+                            <span class="d-day-tag">D-2 (임박)</span>
+                        </div>
+                        <div class="task-desc">
+                            1. 초전도체/그래핀 중 1개 선택 2. 특성 및 실생활 적용 기술 3가지 정리 3. 3분 이내 구두 발표 자료 작성
+                        </div>
+                        <div class="progress-container">
+                            <span>준비진행률 (2/4)</span>
+                            <span>50%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Task Item 2 -->
+                    <div class="task-item" style="margin-top: 20px;">
+                        <div class="task-title">
+                            <div>
+                                <span class="subject-tag">국어</span>
+                                현대소설 인물 갈등 분석 서평 제출
+                            </div>
+                            <span class="d-day-tag" style="background:#f3f4f6; color:var(--text-main);">D-5</span>
+                        </div>
+                        <div class="task-desc">
+                            원미동 사람들을 읽고 주인공의 내적/외적 갈등 요소를 서술형으로 작성하여 제출해요.
+                        </div>
+                        <div class="progress-container">
+                            <span>준비진행률 (1/2)</span>
+                            <span>50%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        /**
+         * [필수 설정] Google Cloud Console에서 발급받은 OAuth 2.0 클라이언트 ID를 입력하세요.
+         */
+        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
+        
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+        let fileId = null; // Drive에 저장된 데이터 파일의 ID
+
+        // GAPI 로드
+        gapi.load('client', initializeGapiClient);
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                discoveryDocs: [DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        // GIS(Google Identity Services) 로드
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: async (resp) => {
+                    if (resp.error !== undefined) {
+                        throw (resp);
+                    }
+                    document.getElementById('loginBtn').style.display = 'none';
+                    document.getElementById('signoutBtn').style.display = 'block';
+                    alert('구글 계정에 성공적으로 연결되었습니다.');
+                    await findOrCreateDataFile();
+                },
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+        window.onload = gisLoaded;
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                document.getElementById('loginBtn').disabled = false;
+            }
+        }
+
+        // 로그인 버튼 클릭
+        function handleAuthClick() {
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        }
+
+        // 로그아웃 버튼 클릭
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken('');
+                document.getElementById('loginBtn').style.display = 'block';
+                document.getElementById('signoutBtn').style.display = 'none';
+                fileId = null;
+            }
+        }
+
+        // Drive에서 데이터 파일(planner_data.json) 찾기 또는 생성하기
+        async function findOrCreateDataFile() {
+            try {
+                let response = await gapi.client.drive.files.list({
+                    q: "name='planner_data.json' and trashed=false",
+                    fields: 'files(id, name)',
+                    spaces: 'drive'
+                });
+                
+                const files = response.result.files;
+                if (files && files.length > 0) {
+                    fileId = files[0].id;
+                    console.log('기존 데이터 파일을 찾았습니다. ID:', fileId);
+                    await readDataFromDrive();
+                } else {
+                    // 파일이 없으면 새로 생성
+                    const metadata = {
+                        name: 'planner_data.json',
+                        mimeType: 'application/json'
+                    };
+                    const initialData = JSON.stringify({ tasks: [] });
+                    
+                    const file = new Blob([initialData], {type: 'application/json'});
+                    
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', file);
+
+                    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: new Headers({ 'Authorization': 'Bearer ' + gapi.client.getToken().access_token }),
+                        body: form,
+                    });
+                    const resJson = await res.json();
+                    fileId = resJson.id;
+                    console.log('새 데이터 파일을 생성했습니다. ID:', fileId);
+                }
+            } catch (err) {
+                console.error('파일 접근 오류:', err);
+            }
+        }
+
+        // Drive에서 데이터 읽어오기
+        async function readDataFromDrive() {
+            if (!fileId) return;
+            try {
+                const response = await gapi.client.drive.files.get({
+                    fileId: fileId,
+                    alt: 'media'
+                });
+                const data = response.body ? JSON.parse(response.body) : response.result;
+                console.log('불러온 데이터:', data);
+                // 여기서 data.tasks 배열을 이용해 화면의 DOM(taskList)을 다시 그리는 로직을 추가할 수 있습니다.
+            } catch (err) {
+                console.error('데이터 불러오기 실패:', err);
+            }
+        }
+
+        // 새 수행평가 등록 시 Drive에 데이터 덮어쓰기 저장
+        async function saveDataToDrive() {
+            if (!gapi.client.getToken()) {
+                alert('먼저 우측 상단의 구글 계정 연결을 진행해주세요.');
+                return;
+            }
+
+            // 임시로 저장할 데이터 객체 구성 (UI의 값을 읽어왔다고 가정)
+            const newData = {
+                tasks: [
+                    { subject: "통합과학", title: "신소재 조사 및 활용 사례 발표", dDay: -2, progress: 50 },
+                    { subject: "국어", title: "현대소설 인물 갈등 분석", dDay: -5, progress: 50 },
+                    // 새로 추가된 데이터가 배열에 들어감
+                ]
+            };
+
+            const fileContent = JSON.stringify(newData);
+
+            try {
+                const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                    method: 'PATCH',
+                    headers: new Headers({
+                        'Authorization': 'Bearer ' + gapi.client.getToken().access_token,
+                        'Content-Type': 'application/json'
+                    }),
+                    body: fileContent
+                });
+                if (res.ok) {
+                    alert('수행평가 일정이 Google Drive에 안전하게 저장되었습니다!');
+                }
+            } catch (err) {
+                console.error('저장 실패:', err);
+                alert('저장 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>
